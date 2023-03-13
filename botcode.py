@@ -1,7 +1,10 @@
 import discord
+import io
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 import requests
+
+
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -20,12 +23,6 @@ async def on_ready():
     
     # Send a message to the channel
     await channel.send("Hello World!")
-
-
-import discord
-from PIL import Image, ImageDraw, ImageFont
-import io
-
 
 @client.event
 async def on_message(message):
