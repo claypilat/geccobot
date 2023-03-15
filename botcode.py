@@ -24,7 +24,7 @@ async def on_ready():
     #await my_background_task()
 
 
-last_token_id = None
+last_transaction_hash = None
 
 @client.event
 async def on_message(message):
@@ -82,15 +82,14 @@ async def on_message(message):
 async def my_background_task():
         channel = client.get_channel(1085615827522424863)  # Replace with your channel ID
         #await channel.send("`Looking on chain....`")
-        global last_token_id
+        global last_transaction_hash
         #while True:
-        url = "https://eth-mainnet.g.alchemy.com/nft/v2/YOUR ALCHEMY TOKEN/getNFTSales?fromBlock=0&toBlock=latest&order=desc&contractAddress=0xb97ca772f6e5d9a68b24c68e3be77990fa7abfb9&limit=1"
+        url = "https://eth-mainnet.g.alchemy.com/nft/v2/YOUR ALCHEMY TOKEN/getNFTSales?fromBlock=0&toBlock=latest&order=desc&contractAddress=0xb97ca772f6e5d9a68b24c68e3be77990fa7abfb9&limit=10"
         headers = {"accept": "application/json"}
         response = requests.get(url, headers=headers)
 
         data = json.loads(response.text)
 
-        nft_sales = data['nftSales']
         if 'nftSales' in data:
             nft_sales = data['nftSales']
         else:
@@ -98,13 +97,15 @@ async def my_background_task():
 
         for sale in nft_sales:
             eth_price = float(sale['sellerFee']['amount']) / (10 ** sale['sellerFee']['decimals'])
+            transaction_hash = sale['transactionHash']
             token_id = sale['tokenId']
             print(f"ETH Amount {eth_price:.2f}")
-            print(f"Token ID: {token_id}")
+            print(f"Token_ID" {token_id})
+            print(f"Transaction Hash: {transaction_hash}")
 
-            if token_id != last_token_id:
-                last_token_id = token_id
-                url = f"https://eth-mainnet.g.alchemy.com/nft/v2/YOUR ALCHEMY TOKEN/getNFTMetadata?contractAddress=0xb97ca772f6e5d9a68b24c68e3be77990fa7abfb9&tokenId={token_id}&refreshCache=false"
+            if transaction_hash != last_transaction_hash:
+                last_transaction_hash = transaction_hash
+                url = f"https://eth-mainnet.g.alchemy.com/nft/v2/YOUR ALCHEMY TOKEN/getNFTMetadata?contractAddress=0xb97ca772f6e5d9a68b24c68e3be77990fa7abfb9&transactionHash={transaction_hash}&refreshCache=false"
 
                 headers = {"accept": "application/json"}
 
