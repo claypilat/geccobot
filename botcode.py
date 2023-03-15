@@ -1,34 +1,36 @@
 import discord
-import io
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 import requests
-
-
 intents = discord.Intents.default()
 intents.message_content = True
+import json
+from discord.ext import commands, tasks
+import time
+import asyncio
 
 client = discord.Client(intents=intents)
 
+bot = commands.Bot(command_prefix='!', intents=intents)
+discord_token = "YOUR DISCORD TOKEN"
 
-@client.event
-async def on_ready():
-    print('Logged in as {0.user}'.format(client))
-
-    
 @client.event
 async def on_ready():
     # Find the channel where you want the bot to send a message
     channel = client.get_channel(1084710357337124996)  # Replace with your channel ID
-    
+    my_background_task.start()
     # Send a message to the channel
-    await channel.send("Hello World!")
+    await channel.send("`Geccobot is booting...`")
+    #await my_background_task()
+
+
+last_token_id = None
 
 @client.event
 async def on_message(message):
     if message.content.startswith('!gecid'):
         # Define paths to images and font
-
+        
         template_path = "C:/Users/clayt/Desktop/geccobot/template.png"
         layer1_path = "C:/Users/clayt/Desktop/geccobot/layer1.png"
         layer2_path = "C:/Users/clayt/Desktop/geccobot/layer2.png"
@@ -76,6 +78,48 @@ async def on_message(message):
         await message.channel.send(file=discord.File(modified_image_buffer, filename='modified_image.png'))
 
 
+@tasks.loop(seconds = 25)
+async def my_background_task():
+        channel = client.get_channel(1085615827522424863)  # Replace with your channel ID
+        #await channel.send("`Looking on chain....`")
+        global last_token_id
+        #while True:
+        url = "https://eth-mainnet.g.alchemy.com/nft/v2/YOUR ALCHEMY TOKEN/getNFTSales?fromBlock=0&toBlock=latest&order=desc&contractAddress=0xb97ca772f6e5d9a68b24c68e3be77990fa7abfb9&limit=1"
+        headers = {"accept": "application/json"}
+        response = requests.get(url, headers=headers)
+
+        data = json.loads(response.text)
+
+        nft_sales = data['nftSales']
+        if 'nftSales' in data:
+            nft_sales = data['nftSales']
+        else:
+            print("Error: 'nftSales' key not found in the response.")
+
+        for sale in nft_sales:
+            eth_price = float(sale['sellerFee']['amount']) / (10 ** sale['sellerFee']['decimals'])
+            token_id = sale['tokenId']
+            print(f"ETH Amount {eth_price:.2f}")
+            print(f"Token ID: {token_id}")
+
+            if token_id != last_token_id:
+                last_token_id = token_id
+                url = f"https://eth-mainnet.g.alchemy.com/nft/v2/YOUR ALCHEMY TOKEN/getNFTMetadata?contractAddress=0xb97ca772f6e5d9a68b24c68e3be77990fa7abfb9&tokenId={token_id}&refreshCache=false"
+
+                headers = {"accept": "application/json"}
+
+                response = requests.get(url, headers=headers)
+
+                data = json.loads(response.text)
+
+                image_url = data["metadata"]["image"]
+
+                # Create an embed
+                embed = discord.Embed(title=f"`GANZ {token_id} JUST SOLD FOR {eth_price:.2f} !`", description=image_url, color=0x00ff00)
+                embed.set_image(url=image_url)
+
+                await channel.send(embed=embed)
+ 
 
 # Replace 'TOKEN' with your bot token
-client.run('INSERT CODE')
+client.run(discord_token)
